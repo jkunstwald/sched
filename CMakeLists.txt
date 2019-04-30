@@ -6,7 +6,7 @@ project(sched)
 #
 
 set(SCHED_BUILD_EXAMPLE OFF CACHE BOOL "If true, an example executable is built")
-set(SCHED_RUNTIME_CHECKS ON CACHE BOOL "If true, some runtime checks are performed")
+set(SCHED_RUNTIME_CHECKS OFF CACHE BOOL "If true, some runtime checks are performed")
 
 #
 # Library
