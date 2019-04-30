@@ -1,11 +1,9 @@
 #pragma once
 
-#include "config.hh"
-
 // SCHED_RUNTIME_ASSERT -----------------------------------------------------------
 // used to check conditions, to test for erros
-// defined only if SCHED_PERFORM_RUNTIME_CHECKS is evaluated to true.
-#if SCHED_PERFORM_RUNTIME_CHECKS
+// defined only if SCHED_RUNTIME_CHECKS is evaluated to true.
+#ifdef SCHED_RUNTIME_CHECKS
 #include <cstdio>
 #include <cstdlib>
 #define SCHED_RUNTIME_ASSERT(cond, ...)                       \

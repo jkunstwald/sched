@@ -1,22 +1,23 @@
 #pragma once
 
-// -- Job Object ----------------------------------------------------------
-// if you want to use your own job objects, define the following
-// macro and provide a struct sched::Job object with an operator() method.
-//
-// Example, a C-like pointer to function:
-//
-//    #define SCHED_CUSTOM_JOB_DEFINITION
-//    namespace sched {
-//      struct Job {
-//        void (*func)(void *arg);
-//        void *arg;
-//        void operator()() { func(arg); }
-//      };
-//    } // sched namespace
-//
-//  By default Jobs are simply std::function<void()>
-//
+/// -- Job Object ----------------------------------------------------------
+///
+/// If you want to use your own job objects, define the following
+/// macro and provide a struct sched::Job object with an operator() method.
+///
+/// Example, a C-like pointer to function:
+///
+///    #define SCHED_CUSTOM_JOB_DEFINITION
+///    namespace sched {
+///      struct Job {
+///        void (*func)(void *arg);
+///        void *arg;
+///        void operator()() { func(arg); }
+///      };
+///    } // sched namespace
+///
+///  By default Jobs are simply std::function<void()>
+///
 #ifndef SCHED_CUSTOM_JOB_DEFINITION
 #include <functional>
 namespace sched
@@ -29,13 +30,13 @@ typedef std::function<void()> Job;
 #include <condition_variable>
 #include <thread>
 
-#include "ObjectPool.hh"
 #include "common/check.hh"
 #include "common/mem_callbacks.hh"
+#include "object_pool.hh"
 
 namespace sched
 {
-// Sync object
+/// Sync object
 class Sync
 {
     uint32_t hnd = 0;

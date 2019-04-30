@@ -1,8 +1,8 @@
 #include <cstdlib>
 #include <mutex>
 
-#include <scheduler/Scheduler.hh>
-#include <scheduler/optional/Spinlock.hh>
+#include <sched/scheduler.hh>
+#include <sched/optional/spinlock.hh>
 
 // Example 7 (from px_sched):
 // Multiple Readers, Single Writer pattern

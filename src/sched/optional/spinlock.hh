@@ -2,11 +2,12 @@
 
 #include <thread>
 
-#include <scheduler/Scheduler.hh>
+#include <sched/scheduler.hh>
 
 namespace sched
 {
-//-- Optional: Spinlock ------------------------------------------------------
+/// Spinlock
+/// Optional, not used in this library
 class Spinlock
 {
 public:

@@ -9,11 +9,10 @@
 
 namespace sched
 {
-// -- ObjectPool -------------------------------------------------------------
-// holds up to 2^20 objects with ref counting and versioning
-// used internally by the Scheduler for tasks and counters, but can also
-// be used as a thread-safe object pool
-
+/// ObjectPool
+/// holds up to 2^20 objects with ref counting and versioning
+/// used internally by the Scheduler for tasks and counters, but can also
+/// be used as a thread-safe object pool
 template <class T>
 struct ObjectPool
 {

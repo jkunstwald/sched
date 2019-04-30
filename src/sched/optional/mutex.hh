@@ -2,11 +2,12 @@
 
 #include <thread>
 
-#include <scheduler/Scheduler.hh>
+#include <sched/scheduler.hh>
 
 namespace sched
 {
-//-- Optional: Mutex template to encapsultae scheduler notification ----------
+/// Mutex template to encapsultae scheduler notification
+/// Optional, not used in this library
 template <class M>
 class Mutex
 {
