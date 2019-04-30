@@ -1,5 +1,5 @@
 # sched
-Simple C++11 Task Scheduler
+Simple C++11 Task Scheduler, forked from [px_sched](https://github.com/pplux/px/blob/master/README_px_sched.md)
 
 No dependencies and easy to integrate
 
@@ -30,7 +30,7 @@ int main() {
 
 ```
 
-Forked from [px_sched](https://github.com/pplux/px/blob/master/README_px_sched.md) with the goals of a cleaner API and simple CMake integration.
+Forked with the goals of a cleaner API, simple CMake integration, and avoiding issues with the single-header pattern.
 
 ## Goals
 
