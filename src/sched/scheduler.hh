@@ -48,7 +48,7 @@ struct SchedulerParams
 {
     uint16_t num_threads = 16;                                                                 ///< num OS threads created
     uint16_t max_running_threads = static_cast<uint16_t>(std::thread::hardware_concurrency()); ///< 0 --> will be set to max hardware concurrency
-    uint16_t max_number_tasks = 1024;                                                          ///< max number of simultaneous tasks
+    uint16_t max_number_tasks = 4096;                                                          ///< max number of simultaneous tasks
     uint16_t thread_num_tries_on_idle = 16;                                                    ///< number of tries before suspend the thread
     uint32_t thread_sleep_on_idle_in_microseconds = 5;                                         ///< time spent waiting between tries
     MemCallbacks mem_callbacks;
