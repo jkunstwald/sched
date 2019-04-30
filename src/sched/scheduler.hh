@@ -64,16 +64,20 @@ public:
     void init(const SchedulerParams& params = SchedulerParams());
     void stop();
 
-    void run(const Job& job, Sync* out_sync_obj = nullptr);
-    void runAfter(Sync sync, const Job& job, Sync* out_sync_obj = nullptr);
-    void waitFor(Sync sync); ///< suspend current thread
+    void run(Job const& job);
+    void run(Job const& job, Sync& sync);
+
+    void runAfter(Sync const& dependency, Job const& job);
+    void runAfter(Sync const& dependency, Job const& job, Sync& sync);
+
+    void waitFor(Sync const& sync); ///< suspend current thread
 
     // returns the number of tasks not yet finished associated to the sync object
     // thus 0 means all of them has finished (or the sync object was empty, or
     // unused)
-    uint32_t numPendingTasks(Sync s) const;
+    uint32_t numPendingTasks(Sync const& s) const;
 
-    bool hasFinished(Sync s) const { return numPendingTasks(s) == 0; }
+    bool hasFinished(Sync const& s) const { return numPendingTasks(s) == 0; }
 
     // Call this only to print the internal state of the scheduler, mainly if it
     // stops working and want to see who is waiting for what, and so on.
@@ -83,12 +87,12 @@ public:
     // when they reach 0.
     // *WARNING*: calling increment without a later decrement might leave
     //            tasks waiting forever, and will leak resources.
-    void incrementSync(Sync* s);
+    void incrementSync(Sync& s);
 
     // manually decrement the value of a Sync object.
     // *WARNING*: never call decrement on a sync object wihtout calling
     //            @incrementSync first.
-    void decrementSync(Sync* s);
+    void decrementSync(Sync& s);
 
     // By default workers will be named as Worker-id
     // The pointer passed here must be valid until set_current_thread is called
@@ -258,9 +262,12 @@ private:
     };
 
     uint16_t wakeUpThreads(uint16_t max_num_threads);
-    uint32_t createTask(const Job& job, Sync* out_sync_obj);
+    uint32_t createTask(const Job& job, Sync* out_sync_obj = nullptr);
     uint32_t createCounter();
     void unrefCounter(uint32_t counter_hnd);
+
+    void scheduleTask(uint32_t taskRef);
+    void scheduleTaskAfter(uint32_t taskRef, Sync const& dependency);
 
     Worker* workers_ = nullptr;
     ObjectPool<Task> tasks_;

@@ -4,7 +4,7 @@
 #include <sched/scheduler.hh>
 #include <sched/optional/spinlock.hh>
 
-// Example 7 (from px_sched):
+// Example 7 from px_sched:
 // Multiple Readers, Single Writer pattern
 
 namespace
@@ -75,14 +75,14 @@ public:
             next_ = sched::Sync();
         }
         if (finish_signal)
-            sched_->incrementSync(finish_signal);
+            sched_->incrementSync(*finish_signal);
         sched_->runAfter(prev_,
                          [this, func, finish_signal]() {
                              func(static_cast<const T*>(obj_));
                              if (finish_signal)
-                                 sched_->decrementSync(finish_signal);
+                                 sched_->decrementSync(*finish_signal);
                          },
-                         &next_);
+                         next_);
     }
 
     template <class T_func>
@@ -92,14 +92,14 @@ public:
         read_mode_ = false;
         sched::Sync new_next;
         if (finish_signal)
-            sched_->incrementSync(finish_signal);
+            sched_->incrementSync(*finish_signal);
         sched_->runAfter(next_,
                          [this, func, finish_signal]() {
                              func(obj_);
                              if (finish_signal)
-                                 sched_->decrementSync(finish_signal);
+                                 sched_->decrementSync(*finish_signal);
                          },
-                         &new_next);
+                         new_next);
         next_ = new_next;
     }
 

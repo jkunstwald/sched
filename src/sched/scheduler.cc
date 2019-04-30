@@ -261,43 +261,27 @@ void Scheduler::wakeUpOneThread()
     }
 }
 
-void Scheduler::run(const Job& job, Sync* sync_obj)
+void Scheduler::run(const Job& job)
 {
-    SCHED_RUNTIME_ASSERT(running_, "Scheduler not running");
-    uint32_t t_ref = createTask(job, sync_obj);
-    ready_tasks_.push(t_ref);
-    wakeUpOneThread();
+    scheduleTask(createTask(job));
 }
 
-void Scheduler::runAfter(Sync _trigger, const Job& _job, Sync* _sync_obj)
+void Scheduler::run(const Job& job, Sync& sync)
 {
-    SCHED_RUNTIME_ASSERT(running_, "Scheduler not running");
-    uint32_t trigger = _trigger.hnd;
-    uint32_t t_ref = createTask(_job, _sync_obj);
-    bool valid = counters_.ref(trigger);
-    if (valid)
-    {
-        Counter* c = &counters_.get(trigger);
-        for (;;)
-        {
-            uint32_t current = c->task_id.load();
-            if (c->task_id.compare_exchange_strong(current, t_ref))
-            {
-                Task* task = &tasks_.get(t_ref);
-                task->next_sibling_task = current;
-                break;
-            }
-        }
-        unrefCounter(trigger);
-    }
-    else
-    {
-        ready_tasks_.push(t_ref);
-        wakeUpOneThread();
-    }
+    scheduleTask(createTask(job, &sync));
 }
 
-void Scheduler::waitFor(Sync s)
+void Scheduler::runAfter(const Sync& dependency, const Job& job)
+{
+    scheduleTaskAfter(createTask(job), dependency);
+}
+
+void Scheduler::runAfter(const Sync& dependency, const Job& job, Sync& sync)
+{
+    scheduleTaskAfter(createTask(job, &sync), dependency);
+}
+
+void Scheduler::waitFor(Sync const& s)
 {
     if (counters_.ref(s.hnd))
     {
@@ -312,7 +296,7 @@ void Scheduler::waitFor(Sync s)
     }
 }
 
-uint32_t Scheduler::numPendingTasks(Sync s) const
+uint32_t Scheduler::numPendingTasks(Sync const& s) const
 {
     return counters_.refCount(s.hnd);
 }
@@ -343,34 +327,68 @@ void Scheduler::unrefCounter(uint32_t hnd)
     }
 }
 
-void Scheduler::incrementSync(Sync* s)
+void Scheduler::scheduleTask(uint32_t taskRef)
 {
-    bool new_counter = false;
-    if (!counters_.ref(s->hnd))
+    SCHED_RUNTIME_ASSERT(running_, "Scheduler not running");
+    ready_tasks_.push(taskRef);
+    wakeUpOneThread();
+}
+
+void Scheduler::scheduleTaskAfter(uint32_t taskRef, const Sync& dependency)
+{
+    SCHED_RUNTIME_ASSERT(running_, "Scheduler not running");
+    uint32_t const& trigger = dependency.hnd;
+    bool valid = counters_.ref(trigger);
+    if (valid)
     {
-        s->hnd = createCounter();
-        new_counter = true;
+        Counter* c = &counters_.get(trigger);
+        for (;;)
+        {
+            uint32_t current = c->task_id.load();
+            if (c->task_id.compare_exchange_strong(current, taskRef))
+            {
+                Task* task = &tasks_.get(taskRef);
+                task->next_sibling_task = current;
+                break;
+            }
+        }
+        unrefCounter(trigger);
     }
-    Counter& c = counters_.get(s->hnd);
-    c.user_count.fetch_add(1);
-    if (!new_counter)
+    else
     {
-        unrefCounter(s->hnd);
+        ready_tasks_.push(taskRef);
+        wakeUpOneThread();
     }
 }
 
-void Scheduler::decrementSync(Sync* s)
+void Scheduler::incrementSync(Sync& s)
 {
-    if (counters_.ref(s->hnd))
+    bool new_counter = false;
+    if (!counters_.ref(s.hnd))
     {
-        Counter& c = counters_.get(s->hnd);
+        s.hnd = createCounter();
+        new_counter = true;
+    }
+    Counter& c = counters_.get(s.hnd);
+    c.user_count.fetch_add(1);
+    if (!new_counter)
+    {
+        unrefCounter(s.hnd);
+    }
+}
+
+void Scheduler::decrementSync(Sync& s)
+{
+    if (counters_.ref(s.hnd))
+    {
+        Counter& c = counters_.get(s.hnd);
         uint32_t prev = c.user_count.fetch_sub(1);
         if (prev == 1)
         {
             // last one should unref twice
-            unrefCounter(s->hnd);
+            unrefCounter(s.hnd);
         }
-        unrefCounter(s->hnd);
+        unrefCounter(s.hnd);
     }
 }
 
