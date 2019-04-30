@@ -42,7 +42,7 @@ struct ObjectPool
 
     // returns the handler of an object in the pool that can be used
     // it also increments in one the number of references (no need to call ref)
-    uint32_t adquireAndRef();
+    uint32_t acquireAndRef();
 
     void unref(uint32_t hnd) const;
 
@@ -151,7 +151,7 @@ inline uint32_t ObjectPool<T>::info(size_t pos, uint32_t* count, uint32_t* ver) 
 }
 
 template <class T>
-inline uint32_t ObjectPool<T>::adquireAndRef()
+inline uint32_t ObjectPool<T>::acquireAndRef()
 {
     uint32_t tries = 0;
     for (;;)

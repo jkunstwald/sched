@@ -13,7 +13,7 @@
 //        void *arg;
 //        void operator()() { func(arg); }
 //      };
-//    } // px namespace
+//    } // sched namespace
 //
 //  By default Jobs are simply std::function<void()>
 //
@@ -22,11 +22,8 @@
 namespace sched
 {
 typedef std::function<void()> Job;
-} // px namespace
+}
 #endif
-// -----------------------------------------------------------------------------
-
-// -----------------------------------------------------------------------------
 
 #include <atomic>
 #include <condition_variable>
@@ -68,14 +65,14 @@ public:
 
     void run(const Job& job, Sync* out_sync_obj = nullptr);
     void runAfter(Sync sync, const Job& job, Sync* out_sync_obj = nullptr);
-    void waitFor(Sync sync); //< suspend current thread
+    void waitFor(Sync sync); ///< suspend current thread
 
     // returns the number of tasks not yet finished associated to the sync object
     // thus 0 means all of them has finished (or the sync object was empty, or
     // unused)
-    uint32_t numPendingTasks(Sync s);
+    uint32_t numPendingTasks(Sync s) const;
 
-    bool hasFinished(Sync s) { return numPendingTasks(s) == 0; }
+    bool hasFinished(Sync s) const { return numPendingTasks(s) == 0; }
 
     // Call this only to print the internal state of the scheduler, mainly if it
     // stops working and want to see who is waiting for what, and so on.
@@ -126,7 +123,7 @@ public:
 
 private:
     struct TLS;
-    static TLS* tls();
+    static TLS& tls();
     void wakeUpOneThread();
     SchedulerParams params_;
     std::atomic<uint32_t> active_threads_;

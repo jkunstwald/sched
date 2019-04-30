@@ -16,22 +16,20 @@ struct Scheduler::TLS
     Resource next_lock = {nullptr, nullptr};
 };
 
-Scheduler::TLS* Scheduler::tls()
+Scheduler::TLS& Scheduler::tls()
 {
     static thread_local TLS tls;
-    return &tls;
+    return tls;
 }
 
 void Scheduler::set_current_thread_name(const char* name)
 {
-    TLS* d = tls();
-    d->name = name;
+    tls().name = name;
 }
 
 const char* Scheduler::current_thread_name()
 {
-    TLS* d = tls();
-    return d->name;
+    return tls().name;
 }
 
 void Scheduler::CurrentThreadSleeps()
@@ -47,27 +45,27 @@ void Scheduler::CurrentThreadWakesUp()
 void Scheduler::CurrentThreadBeforeLockResource(const void* resource_ptr, const char* name)
 {
     // if the lock might work, wake up one thread to replace this one
-    TLS* d = tls();
-    if (d->scheduler && d->scheduler->running_.load())
+    TLS& d = tls();
+    if (d.scheduler && d.scheduler->running_.load())
     {
-        d->scheduler->active_threads_.fetch_sub(1);
-        d->scheduler->wakeUpOneThread();
+        d.scheduler->active_threads_.fetch_sub(1);
+        d.scheduler->wakeUpOneThread();
     }
-    d->next_lock = {resource_ptr, name};
+    d.next_lock = {resource_ptr, name};
 }
 
 void Scheduler::CurrentThreadAfterLockResource(bool success)
 {
     // mark this thread as active (so eventually one thread will step down)
-    TLS* d = tls();
-    if (d->scheduler && d->scheduler->running_.load())
+    TLS& d = tls();
+    if (d.scheduler && d.scheduler->running_.load())
     {
-        d->scheduler->active_threads_.fetch_add(1);
+        d.scheduler->active_threads_.fetch_add(1);
     }
-    if (success && d->next_lock.ptr)
+    if (success && d.next_lock.ptr)
     {
     }
-    d->next_lock = {nullptr, nullptr}; // reset
+    d.next_lock = {nullptr, nullptr}; // reset
 }
 
 void Scheduler::CurrentThreadReleasesResource(const void* resource_ptr)
@@ -207,7 +205,7 @@ void Scheduler::getDebugStatus(char* buffer, size_t buffer_size)
 
 uint32_t Scheduler::createCounter()
 {
-    uint32_t hnd = counters_.adquireAndRef();
+    uint32_t hnd = counters_.acquireAndRef();
     auto& c = counters_.get(hnd);
     c.task_id = 0;
     c.user_count = 0;
@@ -217,7 +215,7 @@ uint32_t Scheduler::createCounter()
 
 uint32_t Scheduler::createTask(const Job& job, Sync* sync_obj)
 {
-    uint32_t ref = tasks_.adquireAndRef();
+    uint32_t ref = tasks_.acquireAndRef();
     auto& task = tasks_.get(ref);
     task.job = job;
     task.counter_id = 0;
@@ -304,7 +302,7 @@ void Scheduler::waitFor(Sync s)
     if (counters_.ref(s.hnd))
     {
         Counter& counter = counters_.get(s.hnd);
-        SCHED_RUNTIME_ASSERT(counter.wait_ptr == nullptr, "Sync object already used for waitFor operation, only one is permited");
+        SCHED_RUNTIME_ASSERT(counter.wait_ptr == nullptr, "Sync object already used for waitFor operation, only one is permitted");
         WaitFor wf;
         counter.wait_ptr = &wf;
         unrefCounter(s.hnd);
@@ -314,7 +312,7 @@ void Scheduler::waitFor(Sync s)
     }
 }
 
-uint32_t Scheduler::numPendingTasks(Sync s)
+uint32_t Scheduler::numPendingTasks(Sync s) const
 {
     return counters_.refCount(s.hnd);
 }
@@ -381,10 +379,10 @@ void Scheduler::WorkerThreadMain(Scheduler* schd, Scheduler::Worker* worker_data
     char buffer[16];
 
     const uint16_t id = worker_data->thread_index;
-    TLS* local_storage = tls();
+    TLS& local_storage = tls();
 
-    local_storage->scheduler = schd;
-    worker_data->thread_tls = local_storage;
+    local_storage.scheduler = schd;
+    worker_data->thread_tls = &local_storage;
 
     auto const ttl_wait = schd->params_.thread_sleep_on_idle_in_microseconds;
     auto const ttl_value = schd->params_.thread_num_tries_on_idle ? schd->params_.thread_num_tries_on_idle : 1;
