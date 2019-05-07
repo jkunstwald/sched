@@ -67,6 +67,19 @@ public:
     void run(Job const& job);
     void run(Job const& job, Sync& sync);
 
+    // Run multiple jobs at once, with a sync
+    template <typename... Jobs>
+    void runMulti(Sync& sync, Job const& job, Jobs const&... jobs)
+    {
+        run(job, sync);
+        runMulti(sync, jobs...);
+    }
+
+    void runMulti(Sync&)
+    {
+        // noop, recursion end
+    }
+
     void runAfter(Sync const& dependency, Job const& job);
     void runAfter(Sync const& dependency, Job const& job, Sync& sync);
 
